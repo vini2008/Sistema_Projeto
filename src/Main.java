@@ -16,11 +16,19 @@ public static void main(String[] args) {
             "Web",
             "Concluído"
         );
+        Projeto projeto3 = new Projeto(
+            3,
+            " Aplicativo Mobile",
+            "Web",
+            "Software",
+            "Planejado"
+        );
 
         System.out.println("PROJETO 1");
         System.out.println(projeto1.getNome());
         System.out.println(projeto1.getCategoria());
         System.out.println(projeto1.getStatus());
+        projeto1.exibirDados();
 
         System.out.println();
 
@@ -28,6 +36,12 @@ public static void main(String[] args) {
         System.out.println(projeto2.getNome());
         System.out.println(projeto2.getCategoria());
         System.out.println(projeto2.getStatus());
+        projeto1.exibirDados();
 
+        System.out.println("PROJETO 3");
+        System.out.println(projeto3.getNome());
+        System.out.println(projeto3.getCategoria());
+        System.out.println(projeto3.getStatus());
+        projeto1.exibirDados();
 }
 }
