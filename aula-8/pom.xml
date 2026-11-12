@@ -14,11 +14,11 @@
     </properties>
 
     <dependencies>
-        <!-- Javalin para criação da API REST -->
+        <!-- Javalin para criação da API REST (Versão estável correta) -->
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
-            <version>7.2.3</version>
+            <version>6.3.0</version>
         </dependency>
         
         <!-- SLF4J / Logback (dependência de log recomendada para o Javalin) -->
@@ -26,6 +26,13 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.13</version>
+        </dependency>
+
+        <!-- FlatLaf para um visual moderno no Swing -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.4.1</version>
         </dependency>
 
         <!-- Jackson para o Javalin gerenciar JSON -->

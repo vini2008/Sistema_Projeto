@@ -1,10 +1,25 @@
 package view;
 
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+
+import client.ApiClient;
 import model.Projeto;
-import service.ProjetoService;
 
 public class TelaProjetos extends JFrame {
     private JTextField campoNome;
@@ -16,20 +31,19 @@ public class TelaProjetos extends JFrame {
     private JButton botaoCadastrar;
     private JButton botaoLimpar;
     
-    private ProjetoService service;
+    private ApiClient apiClient; // Substituiu o ProjetoService
 
     public TelaProjetos() {
-        setTitle("Sistema de Projetos - Interface Gráfica");
+        setTitle("Sistema de Projetos - Interface Gráfica (API)");
         setSize(800, 500);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        service = new ProjetoService();
-        service.carregar(); // Carrega os dados do CSV ao abrir a janela
+        apiClient = new ApiClient(); // Inicializa o cliente HTTP
 
         criarComponentes();
         criarEventos();
-        carregarTabela();
+        carregarTabela(); // Carrega assincronamente da API
     }
 
     private void criarComponentes() {
@@ -104,32 +118,45 @@ public class TelaProjetos extends JFrame {
             return;
         }
 
-        // Gera um ID simples com base no tamanho atual da lista + 1
-        int novoId = service.listar().size() + 1;
-
-        Projeto projeto = new Projeto(novoId, nome, descricao, categoria, status);
-        
-        boolean cadastrado = service.adicionar(projeto);
-        if (cadastrado) {
-            service.salvar(); // Salva no CSV automaticamente
+        try {
+            // ID 0: o servidor da API vai gerar e persistir o ID real automaticamente
+            Projeto projeto = new Projeto(0, nome, descricao, categoria, status);
+            
+            apiClient.cadastrarProjeto(projeto);
             JOptionPane.showMessageDialog(this, "Projeto cadastrado com sucesso!");
             limparFormulario();
             carregarTabela();
-        } else {
-            JOptionPane.showMessageDialog(this, "Erro ao cadastrar projeto.", "Erro", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao cadastrar projeto: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void carregarTabela() {
-        modelo.setRowCount(0); // Limpa a tabela antes de recarregar
-        for (Projeto projeto : service.listar()) {
-            modelo.addRow(new Object[]{
-                projeto.getId(),
-                projeto.getNome(),
-                projeto.getCategoria(),
-                projeto.getStatus()
-            });
-        }
+        // SwingWorker roda a requisição HTTP em segundo plano para não congelar a tela
+        new SwingWorker<List<Projeto>, Void>() {
+            @Override
+            protected List<Projeto> doInBackground() throws Exception {
+                return apiClient.listarProjetos();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    List<Projeto> projetos = get();
+                    modelo.setRowCount(0); // Limpa a tabela antes de preencher
+                    for (Projeto projeto : projetos) {
+                        modelo.addRow(new Object[]{
+                            projeto.getId(),
+                            projeto.getNome(),
+                            projeto.getCategoria(),
+                            projeto.getStatus()
+                        });
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(TelaProjetos.this, "Erro ao carregar projetos: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     public static void main(String[] args) {

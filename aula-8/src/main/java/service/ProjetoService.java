@@ -1,7 +1,8 @@
 package service;
 
-import dao.ProjetoCSV;
 import java.util.ArrayList;
+
+import dao.ProjetoCSV;
 import model.Projeto;
 
 public class ProjetoService {
@@ -11,6 +12,7 @@ public class ProjetoService {
     public ProjetoService() {
         this.projetos = new ArrayList<>();
         this.projetoCSV = new ProjetoCSV();
+        carregar();
     }
 
     public void carregar() {
@@ -21,10 +23,18 @@ public class ProjetoService {
         projetoCSV.salvar(projetos);
     }
 
-    public boolean adicionar(Projeto projeto) {
-        if (buscarPorId(projeto.getId()) != null) {
-            return false; // ID já existe
+public boolean adicionar(Projeto projeto) {
+        // Se o ID for 0, inválido ou já existir, gera automaticamente o próximo ID disponível
+        if (projeto.getId() <= 0 || buscarPorId(projeto.getId()) != null) {
+            int maiorId = 0;
+            for (Projeto p : projetos) {
+                if (p.getId() > maiorId) {
+                    maiorId = p.getId();
+                }
+            }
+            projeto.setId(maiorId + 1);
         }
+        
         projetos.add(projeto);
         return true;
     }

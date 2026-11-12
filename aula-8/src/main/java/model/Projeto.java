@@ -7,6 +7,11 @@ public class Projeto {
     private String categoria;
     private String status;
 
+    // Construtor vazio OBRIGATÓRIO para o Jackson (Deserialização JSON)
+    public Projeto() {
+    }
+
+    // Construtor com parâmetros
     public Projeto(int id, String nome, String descricao, String categoria, String status) {
         this.id = id;
         this.nome = nome;
