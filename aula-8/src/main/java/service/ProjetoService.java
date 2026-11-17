@@ -23,7 +23,7 @@ public class ProjetoService {
         projetoCSV.salvar(projetos);
     }
 
-public boolean adicionar(Projeto projeto) {
+    public boolean adicionar(Projeto projeto) {
         // Se o ID for 0, inválido ou já existir, gera automaticamente o próximo ID disponível
         if (projeto.getId() <= 0 || buscarPorId(projeto.getId()) != null) {
             int maiorId = 0;
@@ -36,6 +36,7 @@ public boolean adicionar(Projeto projeto) {
         }
         
         projetos.add(projeto);
+        salvar(); // Grava no CSV imediatamente
         return true;
     }
 
@@ -81,6 +82,7 @@ public boolean adicionar(Projeto projeto) {
         projeto.setDescricao(projetoAtualizado.getDescricao());
         projeto.setCategoria(projetoAtualizado.getCategoria());
         projeto.setStatus(projetoAtualizado.getStatus());
+        salvar(); // Atualiza e grava no CSV
         return true;
     }
 
@@ -88,6 +90,7 @@ public boolean adicionar(Projeto projeto) {
         Projeto projeto = buscarPorId(id);
         if (projeto != null) {
             projetos.remove(projeto);
+            salvar(); // Grava no CSV após remover
             return true;
         }
         return false;
