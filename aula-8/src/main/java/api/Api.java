@@ -1,6 +1,7 @@
 package api;
 
 import java.util.List;
+
 import io.javalin.Javalin;
 import model.Projeto;
 import service.ProjetoService;
@@ -10,10 +11,12 @@ public class Api {
         ProjetoService service = new ProjetoService();
         service.carregar(); // Carrega os dados salvos no CSV ao iniciar
 
-        var app = Javalin.create().start(7070);
+        var app = Javalin.create(config -> {
+            config.staticFiles.add("/public", io.javalin.http.staticfiles.Location.CLASSPATH);
+        }).start(7070);
 
         // ROTA INICIAL
-        app.get("/", ctx -> ctx.result("API Sistema de Projetos"));
+        // app.get("/", ctx -> ctx.result("API Sistema de Projetos"));
 
         // GET - LISTAR
         app.get("/api/projetos", ctx -> {

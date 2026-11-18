@@ -1,4 +1,2 @@
 api\Api.class
-client\ApiClient.class
-client\ApiClient$1.class
 api\ErroResponse.class
