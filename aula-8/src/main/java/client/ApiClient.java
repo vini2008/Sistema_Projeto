@@ -20,6 +20,17 @@ public class ApiClient {
         this.mapper = new ObjectMapper();
     }
 
+    public void registrarAcesso(String origem) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/acesso?origem=" + origem))
+                    .GET()
+                    .build();
+            client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception ignored) {
+        }
+    }
+
     public List<Projeto> listarProjetos() throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/api/projetos"))
@@ -30,6 +41,21 @@ public class ApiClient {
 
         if (response.statusCode() != 200) {
             throw new RuntimeException("Erro ao listar. Código: " + response.statusCode());
+        }
+
+        return mapper.readValue(response.body(), new TypeReference<List<Projeto>>() {});
+    }
+
+    public List<Projeto> listarTodosProjetos() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/api/projetos/todos"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Erro ao listar todos. Código: " + response.statusCode());
         }
 
         return mapper.readValue(response.body(), new TypeReference<List<Projeto>>() {});
@@ -46,7 +72,7 @@ public class ApiClient {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        
+
         System.out.println("Status da resposta: " + response.statusCode());
         System.out.println("Corpo da resposta: " + response.body());
 

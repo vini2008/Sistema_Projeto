@@ -3,6 +3,7 @@ package service;
 import java.util.ArrayList;
 
 import dao.ProjetoCSV;
+import log.LoggerUtil;
 import model.Projeto;
 
 public class ProjetoService {
@@ -16,30 +17,66 @@ public class ProjetoService {
     }
 
     public void carregar() {
-        this.projetos = projetoCSV.carregar();
+        try {
+            ArrayList<Projeto> carregados = projetoCSV.carregar();
+            this.projetos = (carregados != null) ? carregados : new ArrayList<>();
+        } catch (Exception e) {
+            this.projetos = new ArrayList<>();
+            LoggerUtil.error("Falha ao carregar projetos do CSV: " + e.getMessage());
+            LoggerUtil.application("ERROR", "Erro ao carregar base CSV na inicialização");
+        }
     }
 
     public void salvar() {
-        projetoCSV.salvar(projetos);
+        try {
+            projetoCSV.salvar(projetos);
+        } catch (Exception e) {
+            LoggerUtil.error("Falha ao salvar projetos no CSV: " + e.getMessage());
+            LoggerUtil.application("ERROR", "Erro ao gravar base CSV");
+        }
+    }
+
+    public int gerarProximoId() {
+        // Olha para TODOS os projetos (ativos e cancelados) para o ID nunca se repetir
+        if (projetos == null || projetos.isEmpty()) {
+            return 1;
+        }
+        int maiorId = 0;
+        for (Projeto p : projetos) {
+            if (p.getId() > maiorId) {
+                maiorId = p.getId();
+            }
+        }
+        return maiorId + 1;
     }
 
     public boolean adicionar(Projeto projeto) {
-        // Se o ID for 0, inválido ou já existir, gera automaticamente o próximo ID disponível
-        if (projeto.getId() <= 0 || buscarPorId(projeto.getId()) != null) {
-            int maiorId = 0;
-            for (Projeto p : projetos) {
-                if (p.getId() > maiorId) {
-                    maiorId = p.getId();
-                }
-            }
-            projeto.setId(maiorId + 1);
+        if (projeto == null || projeto.getNome() == null || projeto.getNome().isBlank()) {
+            LoggerUtil.error("Tentativa de adicionar projeto com nome inválido ou vazio");
+            return false;
         }
-        
+
+        // Atribui sempre o próximo ID seguro e sequencial
+        projeto.setId(gerarProximoId());
+
         projetos.add(projeto);
         salvar(); // Grava no CSV imediatamente
+        LoggerUtil.audit("PROJETO " + projeto.getId() + " CRIADO (nome='" + projeto.getNome() + "', status='" + projeto.getStatus() + "')");
         return true;
     }
 
+    // Retorna apenas os projetos que NÃO estão cancelados (para a tabela principal)
+    public ArrayList<Projeto> listarAtivos() {
+        ArrayList<Projeto> ativos = new ArrayList<>();
+        for (Projeto p : projetos) {
+            if (p.getStatus() == null || !p.getStatus().equalsIgnoreCase("Cancelado")) {
+                ativos.add(p);
+            }
+        }
+        return ativos;
+    }
+
+    // Retorna TODOS os projetos (útil para o Dashboard, estatísticas e cálculo de ID)
     public ArrayList<Projeto> listar() {
         return projetos;
     }
@@ -55,8 +92,9 @@ public class ProjetoService {
 
     public ArrayList<Projeto> buscarPorCategoria(String categoria) {
         ArrayList<Projeto> resultado = new ArrayList<>();
+        if (categoria == null) return resultado;
         for (Projeto p : projetos) {
-            if (p.getCategoria().equalsIgnoreCase(categoria)) {
+            if (p.getCategoria() != null && p.getCategoria().equalsIgnoreCase(categoria)) {
                 resultado.add(p);
             }
         }
@@ -65,8 +103,9 @@ public class ProjetoService {
 
     public ArrayList<Projeto> buscarPorStatus(String status) {
         ArrayList<Projeto> resultado = new ArrayList<>();
+        if (status == null) return resultado;
         for (Projeto p : projetos) {
-            if (p.getStatus().equalsIgnoreCase(status)) {
+            if (p.getStatus() != null && p.getStatus().equalsIgnoreCase(status)) {
                 resultado.add(p);
             }
         }
@@ -74,25 +113,39 @@ public class ProjetoService {
     }
 
     public boolean alterar(Projeto projetoAtualizado) {
-        Projeto projeto = buscarPorId(projetoAtualizado.getId());
-        if (projeto == null) {
+        if (projetoAtualizado == null) {
+            LoggerUtil.error("Tentativa de alterar projeto nulo");
             return false;
         }
+        Projeto projeto = buscarPorId(projetoAtualizado.getId());
+        if (projeto == null) {
+            LoggerUtil.error("Tentativa de alterar projeto inexistente ID=" + projetoAtualizado.getId());
+            return false;
+        }
+        if (projetoAtualizado.getNome() == null || projetoAtualizado.getNome().isBlank()) {
+            LoggerUtil.error("Tentativa de alterar projeto ID=" + projetoAtualizado.getId() + " com nome vazio");
+            return false;
+        }
+
         projeto.setNome(projetoAtualizado.getNome());
         projeto.setDescricao(projetoAtualizado.getDescricao());
         projeto.setCategoria(projetoAtualizado.getCategoria());
         projeto.setStatus(projetoAtualizado.getStatus());
         salvar(); // Atualiza e grava no CSV
+        LoggerUtil.audit("PROJETO " + projeto.getId() + " ALTERADO (nome='" + projeto.getNome() + "', status='" + projeto.getStatus() + "')");
         return true;
     }
 
+    // Exclusão Lógica: Em vez de apagar do array, muda o status para "Cancelado"
     public boolean removerPorId(int id) {
         Projeto projeto = buscarPorId(id);
         if (projeto != null) {
-            projetos.remove(projeto);
-            salvar(); // Grava no CSV após remover
+            projeto.setStatus("Cancelado"); // Oculta da tabela, mas preserva no CSV e no Dashboard
+            salvar(); // Grava a alteração no CSV
+            LoggerUtil.audit("PROJETO " + id + " EXCLUIDO (status alterado para Cancelado)");
             return true;
         }
+        LoggerUtil.error("Tentativa de excluir projeto inexistente ID=" + id);
         return false;
     }
 }

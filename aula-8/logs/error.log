@@ -1,0 +1,2 @@
+2026-11-21 14:00:05 ERROR GET /api/projetos/999999 -> Projeto não encontrado (404)
+2026-11-21 14:00:22 ERROR GET /api/projetos/1 -> Projeto não encontrado (404)

@@ -1,2 +1,16 @@
+model\Projeto.class
 api\Api.class
+view\TelaProjetos$PainelGraficoStatus.class
+client\ApiClient.class
+dao\ProjetoCSV.class
+log\LoggerUtil.class
+service\ProjetoService.class
 api\ErroResponse.class
+view\TelaProjetos$PainelGraficoCategoria.class
+view\TelaProjetos$PainelGraficoMensal.class
+view\TelaProjetos.class
+view\TelaProjetos$ResultadoCarga.class
+client\ApiClient$1.class
+view\TelaProjetos$2.class
+client\ApiClient$2.class
+view\TelaProjetos$1.class
